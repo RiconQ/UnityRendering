@@ -1,6 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter))]
@@ -20,7 +17,7 @@ public class RoundedCube : MonoBehaviour
         Generate();
     }
 
-    private async void Generate()
+    private void Generate()
     {
         m_mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = m_mesh;
