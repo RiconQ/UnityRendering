@@ -1,0 +1,17 @@
+// 이 커널(함수)의 이름은 CSMain 이야
+#pragma kernel CSMain
+
+// CPU(C#)에서 받아올 데이터 버퍼
+RWStructuredBuffer<float> _ResultBuffer;
+
+// GPU의 '주방 보조(스레드)'들을 몇 명씩 그룹으로 묶을지 설정
+[numthreads(8, 8, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // 여기가 실제 작업 내용 (수천 명이 동시에 실행!)
+    // id.x, id.y, id.z 는 지금 일하는 내(스레드) 고유 번호
+    
+    // 예시: 내 번호에 100을 곱해서 버퍼에 저장해!
+    int index = id.x + id.y * 8; // (id를 1차원으로 변환)
+    _ResultBuffer[index] = index * 100.0f; 
+}
