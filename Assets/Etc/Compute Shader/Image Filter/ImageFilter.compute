@@ -1,0 +1,120 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel GrayScale
+#pragma kernel Invert
+#pragma kernel Sepia
+#pragma kernel AdjustColor
+#pragma kernel BoxBlur
+#pragma kernel Sharpen
+#pragma kernel Posterize;
+
+// Input
+Texture2D<float4> _SourceTexture;
+
+float _Brightness;
+float _Contrast;
+float _Saturation;
+float _PosterizeSteps;
+
+uint _TextureWidth;
+uint _TextureHeight;
+
+// Output
+RWTexture2D<float4> _ResultTexture;
+
+[numthreads(8,8,1)]
+void GrayScale(uint3 id : SV_DispatchThreadID)
+{
+	// 입력 텍스쳐의 id에 해당하는 픽셀 색상
+	float4 color = _SourceTexture[id.xy];
+
+	// Gray Scale 계산
+	float gray = dot(color.rgb, float3(0.299, 0.587, 0.114));
+
+	_ResultTexture[id.xy] = float4(gray, gray, gray, color.a);
+}
+
+[numthreads(8, 8, 1)]
+void Invert(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 color = _SourceTexture[id.xy];
+
+	_ResultTexture[id.xy] = float4(1.0 - color.rgb, color.a);
+}
+
+[numthreads(8, 8, 1)]
+void Sepia(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 color = _SourceTexture[id.xy];
+
+	float3 sepia;
+	sepia.r = dot(color.rgb, float3(0.393, 0.769, 0.189));
+    sepia.g = dot(color.rgb, float3(0.349, 0.686, 0.168));
+    sepia.b = dot(color.rgb, float3(0.272, 0.534, 0.131));
+
+	_ResultTexture[id.xy] = float4(saturate(sepia), color.a);
+}
+
+[numthreads(8, 8, 1)]
+void AdjustColor(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 color = _SourceTexture[id.xy];
+
+	// Brightness
+	float3 result = color.rgb * _Brightness;
+	// Contrast
+	result = (result - 0.5) * _Contrast + 0.5;
+	//Saturation
+	float gray = dot(color.rgb, float3(0.299, 0.587, 0.114));
+	result = lerp(float3(gray, gray, gray), result, _Saturation);
+
+	_ResultTexture[id.xy] = float4(saturate(result), color.a);
+}
+
+[numthreads(8, 8, 1)]
+void BoxBlur(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 totalColor = float4(0, 0, 0, 0);
+
+	for(int x = -1; x <= 1; x++)
+	{
+		for(int y = -1; y <= 1; y++)
+		{
+			int posX = clamp(id.x + x, 0, _TextureWidth - 1);
+			int posY = clamp(id.y + y, 0, _TextureHeight - 1);
+			int2 samplePos = int2(posX, posY);
+
+			totalColor += _SourceTexture[samplePos];
+		}
+	}
+
+	_ResultTexture[id.xy] = totalColor / 9.0;
+}
+
+[numthreads(8, 8, 1)]
+void Sharpen(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 center = _SourceTexture[id.xy];
+
+	int clampTop = clamp(id.y + 1, 0, _TextureHeight - 1);
+	int clampBottom = clamp(id.y - 1, 0, _TextureHeight - 1);
+	int clampLeft = clamp(id.x - 1, 0, _TextureWidth - 1);
+	int clampRight = clamp(id.x + 1, 0, _TextureWidth - 1);
+
+	float4 top = _SourceTexture[int2(id.x, clampTop)];
+	float4 bottom = _SourceTexture[int2(id.x, clampBottom)];
+	float4 left = _SourceTexture[int2(clampLeft, id.y)];
+	float4 right = _SourceTexture[int2(clampRight, id.y)];
+
+	float4 result = center * 5.0 - (top + bottom + left + right);
+	_ResultTexture[id.xy] = float4(saturate(result.rgb), center.a);
+}
+
+[numthreads(8, 8, 1)]
+void Posterize(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 color = _SourceTexture[id.xy];
+
+	float3 result = floor(color.rgb * _PosterizeSteps) / _PosterizeSteps;
+
+	_ResultTexture[id.xy] = float4(result, color.a);
+}
