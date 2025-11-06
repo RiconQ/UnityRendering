@@ -8,11 +8,14 @@ Shader "Custom/Reflection"
 		_MainTex("Albedo", 2D) = "white" {}
 		[NoScaleOffset] _NormalMap("NormalMap", 2D) = "bump" {}
 		_BumpScale ("Bump Scale", Float) = 1
+		[NoScaleOffset] _MetallicMap("Metallic", 2D) = "white" {}
 		[Gamma] _Metallic ("Metallic", Range(0, 1)) = 0
 		_Smoothness("Smoothness", Range(0, 1)) = 0.5
-		_DetailTex("Detail Texture", 2D) = "gray" {}
+		_DetailTex("Detail Albedo", 2D) = "gray" {}
 		[NoScaleOffset] _DetailNormalMap ("Detail Normals", 2D) = "bump" {}
 		_DetailBumpScale ("Detail Bump Scale", Float) = 1
+		[NoScaleOffset] _EmissionMap ("Emission", 2D) = "black" {}
+		[HDR] _Emission ("Emission", Color) = (0, 0, 0)
 	}
 	
 	CGINCLUDE
@@ -31,7 +34,10 @@ Shader "Custom/Reflection"
 			CGPROGRAM
 
 			#pragma target 3.0
-
+			
+			#pragma shader_feature _METALLIC_MAP
+			#pragma shader_feature _ _SMOOTHNESS_ALBEDO _SMOOTHNESS_METALLIC
+			#pragma shader_feature _EMISSION_MAP
 			#pragma multi_compile _ SHADOWS_SCREEN
 			#pragma multi_compile _ VERTEXLIGHT_ON
 
@@ -59,6 +65,7 @@ Shader "Custom/Reflection"
 		
 			#pragma target 3.0
 		
+			#pragma shader_feature _METALLIC_MAP
 			#pragma multi_compile_fwdadd_fullshadows
 
 			#pragma vertex MyVertexProgram
@@ -90,4 +97,5 @@ Shader "Custom/Reflection"
 			ENDCG
 		}
 	}
+	CustomEditor "MyLightingShaderGUI"
 }

@@ -59,4 +59,5 @@ Shader "Custom/My First Lighting Shader"
 			ENDCG
 		}
 	}
+
 }
