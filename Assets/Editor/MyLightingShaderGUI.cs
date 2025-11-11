@@ -50,11 +50,11 @@ public class MyLightingShaderGUI : ShaderGUI
             mode = RenderingMode.Cutout;
             m_shouldShowAlphaCutoff = true;
         }
-        else if(IsKeywordEnabled("_RENDERING_FADE"))
+        else if (IsKeywordEnabled("_RENDERING_FADE"))
         {
             mode = RenderingMode.Fade;
         }
-        else if(IsKeywordEnabled("_RENDERING_TRANSPARENT"))
+        else if (IsKeywordEnabled("_RENDERING_TRANSPARENT"))
         {
             mode = RenderingMode.Transparent;
         }
@@ -70,7 +70,7 @@ public class MyLightingShaderGUI : ShaderGUI
 
             RenderingSettings settings = RenderingSettings.modes[(int)mode];
 
-            foreach(Material m in m_editor.targets)
+            foreach (Material m in m_editor.targets)
             {
                 m.renderQueue = (int)settings.queue;
                 m.SetOverrideTag("RenderType", settings.renderType);
@@ -78,6 +78,11 @@ public class MyLightingShaderGUI : ShaderGUI
                 m.SetInt("_DstBlend", (int)settings.dstBlend);
                 m.SetInt("_ZWrite", settings.zWrite ? 1 : 0);
             }
+        }
+
+        if (mode == RenderingMode.Fade || mode == RenderingMode.Transparent)
+        {
+            DoSemitransparentShadow();
         }
     }
 
@@ -181,6 +186,24 @@ public class MyLightingShaderGUI : ShaderGUI
         EditorGUI.indentLevel += 2;
         m_editor.ShaderProperty(slider, MakeLabel(slider));
         EditorGUI.indentLevel -= 2;
+    }
+
+    private void DoSemitransparentShadow()
+    {
+        EditorGUI.BeginChangeCheck();
+        bool semitransparentShadow =
+            EditorGUILayout.Toggle(
+                    MakeLabel("Semitransp. Shadows", "Semitransparent Shadows"),
+                    IsKeywordEnabled("_SEMITRANSPARENT_SHADOWS")
+                );
+        if (EditorGUI.EndChangeCheck())
+        {
+            SetKeyword("_SEMITRANSPARENT_SHADOWS", semitransparentShadow);
+        }
+        if(!semitransparentShadow)
+        {
+            m_shouldShowAlphaCutoff = true;
+        }
     }
 
     private void DoSecondary()
